@@ -494,8 +494,8 @@ mbus_variable_vif vif_table[] = {
     { 0x207, 1.0e0,  "Reserved", "Reserved" },
 
     /* E000 100n Energy 10(n-1) GJ 0.1GJ to 1GJ */
-    { 0x208, 1.0e8,  "Reserved", "Energy" },
-    { 0x209, 1.0e9,  "Reserved", "Energy" },
+    { 0x208, 1.0e8,  "J", "Energy" }, /* was "Reserved" upstream */
+    { 0x209, 1.0e9,  "J", "Energy" }, /* was "Reserved" upstream */
 
     /* E000 101n Reserved */
     { 0x20A, 1.0e0,  "Reserved", "Reserved" },
@@ -568,8 +568,8 @@ mbus_variable_vif vif_table[] = {
     { 0x22F, 1.0e0, "Reserved", "Reserved" },
 
     /* E011 000n Power 10(n-1) GJ/h 0.1GJ/h to 1GJ/h */
-    { 0x230, 1.0e8, "J", "Power" },
-    { 0x231, 1.0e9, "J", "Power" },
+    { 0x230, 1.0e8, "J/h", "Power" },
+    { 0x231, 1.0e9, "J/h", "Power" },
 
     /* E011 0010 to E101 0111 Reserved */
     { 0x232, 1.0e0, "Reserved", "Reserved" },
@@ -659,7 +659,7 @@ mbus_variable_vif vif_table[] = {
 
     /* E111 1nnn cumul. count max power § 10(nnn-3) W 0.001W to 10000W */
     { 0x278, 1.0e-3, "W", "Cumul count max power" },
-    { 0x279, 1.0e-3, "W", "Cumul count max power" },
+    { 0x279, 1.0e-2, "W", "Cumul count max power" },
     { 0x27A, 1.0e-1, "W", "Cumul count max power" },
     { 0x27B, 1.0e0,  "W", "Cumul count max power" },
     { 0x27C, 1.0e1,  "W", "Cumul count max power" },
