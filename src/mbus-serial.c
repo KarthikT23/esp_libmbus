@@ -82,6 +82,39 @@ mbus_serial_set_baudrate(mbus_handle *handle, long baudrate)
     return 0;
 }
 
+int
+mbus_serial_set_parity(mbus_handle *handle, uart_parity_t parity)
+{
+    mbus_serial_data *sd;
+
+    if (handle == NULL || (sd = (mbus_serial_data *)handle->auxdata) == NULL || !sd->installed)
+        return -1;
+
+    if (uart_set_parity(sd->cfg.port, parity) != ESP_OK)
+        return -1;
+
+    sd->cfg.parity = parity;
+    return 0;
+}
+
+/* raw bytes outside M-Bus framing, e.g. wake-up burst */
+int
+mbus_serial_write_raw(mbus_handle *handle, const void *data, size_t len)
+{
+    mbus_serial_data *sd;
+
+    if (handle == NULL || data == NULL || len == 0 ||
+        (sd = (mbus_serial_data *)handle->auxdata) == NULL || !sd->installed)
+        return -1;
+
+    if (uart_write_bytes(sd->cfg.port, data, len) != (int)len)
+        return -1;
+
+    /* 12 bit times per byte covers start, 8 data, parity, stop with margin */
+    uint32_t wait_ms = (uint32_t)((uint64_t)len * 12 * 1000 / sd->cfg.baudrate) + 100;
+    uart_wait_tx_done(sd->cfg.port, pdMS_TO_TICKS(wait_ms));
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 //
