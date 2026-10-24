@@ -9,7 +9,9 @@
 //------------------------------------------------------------------------------
 
 #include "mbus-protocol.h"
-#include "../config.h"
+#ifndef VERSION
+#define VERSION "0.10.4-esp.1"
+#endif
 
 //
 //
