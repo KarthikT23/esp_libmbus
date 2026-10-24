@@ -41,9 +41,9 @@ mbus_serial_connect(mbus_handle *handle)
 
     const uart_config_t uc = {
         .baud_rate  = sd->cfg.baudrate,
-        .data_bits  = UART_DATA_8_BITS,
-        .parity     = UART_PARITY_EVEN,
-        .stop_bits  = UART_STOP_BITS_1,
+        .data_bits  = sd->cfg.data_bits,
+        .parity     = sd->cfg.parity,
+        .stop_bits  = sd->cfg.stop_bits,
         .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_DEFAULT,
     };
@@ -205,7 +205,9 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
         fprintf(stderr, "%s: Serial connection is not available.\n", __PRETTY_FUNCTION__);
         return MBUS_RECV_RESULT_ERROR;
     }
-    const TickType_t rd_timeout = pdMS_TO_TICKS(mbus_serial_timeout_ms(sd->cfg.baudrate));
+    const int rd_ms = sd->cfg.rx_timeout_ms > 0 ? sd->cfg.rx_timeout_ms
+                                                : mbus_serial_timeout_ms(sd->cfg.baudrate);
+    const TickType_t rd_timeout = pdMS_TO_TICKS(rd_ms);
 
     memset((void *)buff, 0, sizeof(buff));
 
