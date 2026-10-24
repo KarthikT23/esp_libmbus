@@ -38,14 +38,14 @@ mbus_manufacturer_id(char *manufacturer)
     if (!manufacturer || strlen(manufacturer) < 3)
         return 0;
 
-    if (!isalpha(manufacturer[0]) ||
-        !isalpha(manufacturer[1]) ||
-        !isalpha(manufacturer[2]))
+    if (!isalpha((unsigned char)manufacturer[0]) ||
+        !isalpha((unsigned char)manufacturer[1]) ||
+        !isalpha((unsigned char)manufacturer[2]))
         return 0;
 
-    id = (toupper(manufacturer[0]) - 64) * 32 * 32 +
-         (toupper(manufacturer[1]) - 64) * 32 +
-         (toupper(manufacturer[2]) - 64);
+    id = (toupper((unsigned char)manufacturer[0]) - 64) * 32 * 32 +
+         (toupper((unsigned char)manufacturer[1]) - 64) * 32 +
+         (toupper((unsigned char)manufacturer[2]) - 64);
 
     /*
      * Valid input data should be in the range of 'AAA' to 'ZZZ' according to
@@ -5646,7 +5646,7 @@ mbus_frame_get_secondary_address(mbus_frame *frame)
 char *
 mbus_frame_get_secondary_address_to_buffer(mbus_frame *frame, char *output_buffer, size_t output_buffer_size)
 {
-    mbus_frame_data *data;
+    mbus_frame_data *data = NULL;
     unsigned long id;
 
     if (output_buffer_size < 17)
@@ -5786,7 +5786,7 @@ mbus_is_secondary_address(const char * value)
 
     for (i = 0; i < 16; i++)
     {
-        if (!isxdigit(value[i]))
+        if (!isxdigit((unsigned char)value[i]))
             return 0;
     }
 

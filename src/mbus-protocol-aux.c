@@ -2412,7 +2412,7 @@ mbus_select_secondary_address(mbus_handle * handle, const char *mask)
 int
 mbus_probe_secondary_address(mbus_handle *handle, const char *mask, char *matching_addr)
 {
-    int ret, i;
+    int ret = MBUS_PROBE_NOTHING, i;
     mbus_frame reply;
 
     if (mask == NULL || matching_addr == NULL || strlen(mask) != 16)
