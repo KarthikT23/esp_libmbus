@@ -35,7 +35,10 @@
 
 #include "mbus-protocol.h"
 #include "mbus-protocol-aux.h"
+#include "sdkconfig.h"
+#ifdef CONFIG_MBUS_ENABLE_TCP
 #include "mbus-tcp.h"
+#endif
 #include "mbus-serial.h"
 
 #ifdef __cplusplus

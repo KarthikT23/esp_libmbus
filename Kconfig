@@ -1,0 +1,10 @@
+menu "esp_libmbus"
+
+    config MBUS_ENABLE_TCP
+        bool "Enable M-Bus over TCP gateway transport"
+        default n
+        help
+            Builds mbus-tcp.c and mbus_context_tcp(). Needs lwIP sockets.
+            UART transport is always available.
+
+endmenu

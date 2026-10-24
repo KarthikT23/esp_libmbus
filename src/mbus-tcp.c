@@ -58,7 +58,7 @@ mbus_tcp_connect(mbus_handle *handle)
 
     if ((status = getaddrinfo(host, port, &hints, &servinfo)) != 0)
     {
-        snprintf(error_str, sizeof(error_str), "%s: getaddrinfo: %s", __PRETTY_FUNCTION__, gai_strerror(status));
+        snprintf(error_str, sizeof(error_str), "%s: getaddrinfo failed (%d)", __PRETTY_FUNCTION__, status);
         mbus_error_str_set(error_str);
         return -1;
     }

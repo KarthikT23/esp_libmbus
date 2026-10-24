@@ -68,6 +68,7 @@
 #include "mbus-protocol.h"
 #include "mbus-serial-config.h"
 #include <stdbool.h>
+#include "sdkconfig.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -187,6 +188,7 @@ void mbus_register_abort_scan_check(mbus_handle *handle, bool (*abort_scan_check
  */
 mbus_handle * mbus_context_serial(const mbus_serial_config_t *cfg);
 
+#ifdef CONFIG_MBUS_ENABLE_TCP
 /**
  * Allocate and initialize M-Bus TCP context.
  *
@@ -196,6 +198,7 @@ mbus_handle * mbus_context_serial(const mbus_serial_config_t *cfg);
  * @return Initialized "unified" handler when successful, NULL otherwise;
  */
 mbus_handle * mbus_context_tcp(const char *host, uint16_t port);
+#endif
 
 /**
  * Deallocate memory used by M-Bus context.

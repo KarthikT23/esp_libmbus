@@ -12,8 +12,11 @@
 //------------------------------------------------------------------------------
 
 #include "mbus-protocol-aux.h"
+#include "sdkconfig.h"
 #include "mbus-serial.h"
+#ifdef CONFIG_MBUS_ENABLE_TCP
 #include "mbus-tcp.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -1639,6 +1642,7 @@ mbus_context_serial(const mbus_serial_config_t *cfg)
 
     handle->max_data_retry = 3;
     handle->max_search_retry = 1;
+    handle->fd = -1;
     handle->is_serial = 1;
     handle->purge_first_frame = MBUS_FRAME_PURGE_M2S;
     handle->auxdata = serial_data;
@@ -1660,6 +1664,7 @@ mbus_context_serial(const mbus_serial_config_t *cfg)
     return handle;
 }
 
+#ifdef CONFIG_MBUS_ENABLE_TCP
 mbus_handle *
 mbus_context_tcp(const char *host, uint16_t port)
 {
@@ -1683,6 +1688,7 @@ mbus_context_tcp(const char *host, uint16_t port)
 
     handle->max_data_retry = 3;
     handle->max_search_retry = 1;
+    handle->fd = -1;
     handle->is_serial = 0;
     handle->purge_first_frame = MBUS_FRAME_PURGE_M2S;
     handle->auxdata = tcp_data;
@@ -1710,6 +1716,7 @@ mbus_context_tcp(const char *host, uint16_t port)
 
     return handle;
 }
+#endif
 
 void
 mbus_context_free(mbus_handle * handle)
