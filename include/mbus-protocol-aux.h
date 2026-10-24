@@ -66,7 +66,7 @@
 #define __MBUS_PROTOCOL_AUX_H__
 
 #include "mbus-protocol.h"
-
+#include "mbus-serial-config.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -179,13 +179,13 @@ void mbus_register_found_event(mbus_handle *handle, void (*event)(mbus_handle *h
 void mbus_register_abort_scan_check(mbus_handle *handle, bool (*abort_scan_check)(struct _mbus_handle *handle));
 
 /**
- * Allocate and initialize M-Bus serial context.
+ * Allocate and initialize M-Bus serial (UART) context.
  *
- * @param device Serial device (like /dev/ttyUSB0 or /dev/ttyS0)
+ * @param cfg UART port, pins and baudrate (copied; may live on the caller's stack)
  *
  * @return Initialized "unified" handler when successful, NULL otherwise;
  */
-mbus_handle * mbus_context_serial(const char *device);
+mbus_handle * mbus_context_serial(const mbus_serial_config_t *cfg);
 
 /**
  * Allocate and initialize M-Bus TCP context.

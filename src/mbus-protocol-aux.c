@@ -1614,11 +1614,13 @@ mbus_frame_data_xml_normalized(mbus_frame_data *data)
 }
 
 mbus_handle *
-mbus_context_serial(const char *device)
+mbus_context_serial(const mbus_serial_config_t *cfg)
 {
     mbus_handle *handle;
     mbus_serial_data *serial_data;
     char error_str[128];
+    if (cfg == NULL)
+        return NULL;
 
     if ((handle = (mbus_handle *) malloc(sizeof(mbus_handle))) == NULL)
     {
@@ -1633,6 +1635,7 @@ mbus_context_serial(const char *device)
         free(handle);
         return NULL;
     }
+    memset(serial_data, 0, sizeof(*serial_data));
 
     handle->max_data_retry = 3;
     handle->max_search_retry = 1;
@@ -1651,14 +1654,8 @@ mbus_context_serial(const char *device)
     handle->found_event = NULL;
     handle->abort_scan_check = NULL;
 
-    if ((serial_data->device = strdup(device)) == NULL)
-    {
-        snprintf(error_str, sizeof(error_str), "%s: failed to allocate memory for device\n", __PRETTY_FUNCTION__);
-        mbus_error_str_set(error_str);
-        free(serial_data);
-        free(handle);
-        return NULL;
-    }
+    serial_data->cfg = *cfg;
+    serial_data->installed = false;
 
     return handle;
 }

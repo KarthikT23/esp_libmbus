@@ -18,7 +18,8 @@
 #ifndef MBUS_SERIAL_H
 #define MBUS_SERIAL_H
 
-#include <termios.h>
+#include <stdbool.h>
+#include "mbus-serial-config.h"
 #include "mbus-protocol-aux.h"
 #include "mbus-protocol.h"
 
@@ -26,11 +27,9 @@
 extern "C" {
 #endif
 
-
-typedef struct _mbus_serial_data
-{
-    char *device;
-    struct termios t;
+typedef struct {
+    mbus_serial_config_t cfg;
+    bool installed;       /* true while the UART driver is installed by us */
 } mbus_serial_data;
 
 int  mbus_serial_connect(mbus_handle *handle);
