@@ -40,6 +40,7 @@
 #include "mbus-tcp.h"
 #endif
 #include "mbus-serial.h"
+#include "mbus-link.h"
 
 #ifdef __cplusplus
 extern "C" {

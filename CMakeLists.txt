@@ -3,6 +3,7 @@ set(mbus_srcs
     "src/mbus-protocol.c"
     "src/mbus-protocol-aux.c"
     "src/mbus-serial.c"
+    "src/mbus-link.c"
 )
 
 if(CONFIG_MBUS_ENABLE_TCP)
