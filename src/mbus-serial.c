@@ -25,7 +25,7 @@
 #include "mbus-protocol-aux.h"
 #include "mbus-protocol.h"
 
-#define PACKET_BUFF_SIZE 2048
+#define PACKET_BUFF_SIZE 512   /* max telegram is 261 bytes */
 
 //------------------------------------------------------------------------------
 /// Set up a serial connection handle.
