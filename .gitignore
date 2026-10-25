@@ -78,3 +78,6 @@ _build/
 /.vscode/
 CMakeLists.txt.user*.exe
 .clangd
+
+*.exe
+.clangd
