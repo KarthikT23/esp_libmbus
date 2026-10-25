@@ -486,6 +486,35 @@ mbus_link_mode_t mbus_meter_link_mode(const mbus_meter_t *meter);
  * baud_out may be NULL. Serial only. Returns 0 or a mbus_meter_err_t. */
 int mbus_meter_probe(mbus_meter_t *meter, uint32_t *baud_out);
 
+/* ------------------------------------------------------------------ */
+/* secondary address scan                                              */
+/* ------------------------------------------------------------------ */
+
+typedef struct {
+    const char *mask;       /* 16 hex digits, FF bytes are wildcards, NULL = all wildcards */
+    unsigned    max_found;  /* stop after this many devices, 0 = no limit */
+    /* every device found: addr is 16 hex digits (id, manufacturer, version, medium).
+     * Return nonzero to stop the scan. May be NULL. */
+    int       (*on_found)(void *ctx, const char *addr);
+    /* before every select, with the mask about to be sent. May be NULL. */
+    void      (*on_probe)(void *ctx, const char *mask);
+    void       *ctx;
+} mbus_meter_scan_cfg_t;
+
+typedef struct {
+    unsigned found;         /* devices reported */
+    unsigned unresolved;    /* full id matched >1 device, differing in mfr/version/medium */
+    unsigned probes;        /* select frames sent */
+} mbus_meter_scan_result_t;
+
+/* Finds secondary addresses by walking the 4 id bytes (BCD 00..99), wildcard
+ * per byte. Uses the profile for timeouts, retries, select settle, post-NKE
+ * delay and the first FCB (NULL = generic profile). Honours the handle's
+ * abort callback. result may be NULL.
+ * Returns the number of devices found (>= 0) or a negative mbus_meter_err_t. */
+int mbus_meter_scan_secondary(mbus_handle *handle, const mbus_meter_profile_t *profile,
+                              const mbus_meter_scan_cfg_t *cfg, mbus_meter_scan_result_t *result);
+
 /* Full read cycle per profile. Initializes *out (do not pass a filled readout).
  * Returns OK / PARTIAL / error, *out holds whatever was decoded either way.
  * Always call mbus_meter_readout_free(out) afterwards. */

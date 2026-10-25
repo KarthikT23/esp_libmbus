@@ -276,13 +276,19 @@ static int match_primary(fs_bus *b, int addr, int *out, int max)
     return n;
 }
 
-/* mask nibble F / byte FF match anything */
-static int sec_match(const uint8_t *mask, const uint8_t *own)
+/* mask nibble F / byte FF match anything; bytewise: only the whole byte FF */
+static int sec_match(const uint8_t *mask, const uint8_t *own, int bytewise)
 {
     int i;
 
     for (i = 0; i < 4; i++) {
         uint8_t m = mask[i], o = own[i];
+
+        if (bytewise) {
+            if (m != 0xFF && m != o)
+                return 0;
+            continue;
+        }
 
         if ((m & 0xF0) != 0xF0 && (m & 0xF0) != (o & 0xF0))
             return 0;
@@ -307,7 +313,7 @@ static void handle_select(fs_bus *b, const mbus_frame *f)
         s->selected = 0;
         if (deaf(s) || s->sec[0] == '\0' || sec_bytes(s->sec, own) != 0)
             continue;
-        if (sec_match(f->data, own)) {
+        if (sec_match(f->data, own, b->sec_bytewise)) {
             s->selected = 1;
             if (s->select_resets_fcb)
                 slave_reset(s);

@@ -7,11 +7,11 @@
 #include "mbus-protocol.h"
 #include "mbus-protocol-aux.h"
 
-#define FS_MAX_SLAVES  4
+#define FS_MAX_SLAVES  8
 #define FS_MAX_TG      8
 #define FS_TG_MAX      300
 #define FS_RXQ_SIZE    4096
-#define FS_LOG_MAX     128
+#define FS_LOG_MAX     2048
 
 typedef enum {
     FS_FCB_LENIENT = 0,   /* answers by request count, ignores FCB */
@@ -57,6 +57,7 @@ typedef struct {
     size_t   rx_head, rx_tail;
 
     int      echo;                 /* converter echoes master frames */
+    int      sec_bytewise;         /* id compared per byte only, a lone F nibble is no wildcard */
     long     jam_left;             /* endless 0xFF source, bytes left */
     int      corrupt_next;         /* 1 = bad checksum, 2 = truncated */
 

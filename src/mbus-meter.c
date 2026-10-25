@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "mbus-meter.h"
@@ -139,26 +140,38 @@ typedef struct {
 } to_save_t;
 
 static void
-to_apply(const mbus_meter_t *m, to_save_t *s)
+to_apply_hp(mbus_handle *h, const mbus_meter_profile_t *p, to_save_t *s)
 {
     int f, g;
 
     s->applied = false;
-    if (!m->h->is_serial || (m->prof.rx_first_byte_ms == 0 && m->prof.rx_gap_ms == 0))
+    if (!h->is_serial || (p->rx_first_byte_ms == 0 && p->rx_gap_ms == 0))
         return;
-    if (mbus_serial_get_rx_timeouts(m->h, &s->first, &s->gap) != 0)
+    if (mbus_serial_get_rx_timeouts(h, &s->first, &s->gap) != 0)
         return;
-    f = m->prof.rx_first_byte_ms ? (int)m->prof.rx_first_byte_ms : s->first;
-    g = m->prof.rx_gap_ms ? (int)m->prof.rx_gap_ms : s->gap;
-    if (mbus_serial_set_rx_timeouts(m->h, f, g) == 0)
+    f = p->rx_first_byte_ms ? (int)p->rx_first_byte_ms : s->first;
+    g = p->rx_gap_ms ? (int)p->rx_gap_ms : s->gap;
+    if (mbus_serial_set_rx_timeouts(h, f, g) == 0)
         s->applied = true;
+}
+
+static void
+to_restore_h(mbus_handle *h, const to_save_t *s)
+{
+    if (s->applied)
+        mbus_serial_set_rx_timeouts(h, s->first, s->gap);
+}
+
+static void
+to_apply(const mbus_meter_t *m, to_save_t *s)
+{
+    to_apply_hp(m->h, &m->prof, s);
 }
 
 static void
 to_restore(const mbus_meter_t *m, const to_save_t *s)
 {
-    if (s->applied)
-        mbus_serial_set_rx_timeouts(m->h, s->first, s->gap);
+    to_restore_h(m->h, s);
 }
 
 /* Read and drop frames until the bus is quiet. Returns 1 if the cap was hit. */
@@ -208,6 +221,19 @@ send_req_ud2(mbus_handle *h, int addr, int fcb, int fcv)
     rc = mbus_send_frame(h, f);
     mbus_frame_free(f);
     return rc == 0 ? 0 : -1;
+}
+
+/* FCB / FCV of the first REQ_UD2 after NKE or select */
+static void
+first_fcb(const mbus_meter_profile_t *p, int *fcb, int *fcv)
+{
+    *fcv = 1;
+    switch (p->fcb_policy) {
+    case MBUS_METER_FCB_ALWAYS_SET:   *fcb = 1; break;
+    case MBUS_METER_FCB_ALWAYS_CLEAR: *fcb = 0; break;
+    case MBUS_METER_FCB_NONE:         *fcb = 0; *fcv = 0; break;
+    default:                          *fcb = p->first_fcb; break;
+    }
 }
 
 static int
@@ -436,15 +462,10 @@ static int
 request_loop(mbus_meter_t *m, rx_ctx_t *c, int q_addr, mbus_meter_readout_t *out)
 {
     const mbus_meter_profile_t *p = &m->prof;
-    int fcb, fcv = 1, good = 0, rc, dr;
+    int fcb, fcv, good = 0, rc, dr;
     int max_frames = p->max_frames ? p->max_frames : MAX_FRAMES_DEFAULT;
 
-    switch (p->fcb_policy) {
-    case MBUS_METER_FCB_ALWAYS_SET:   fcb = 1; break;
-    case MBUS_METER_FCB_ALWAYS_CLEAR: fcb = 0; break;
-    case MBUS_METER_FCB_NONE:         fcb = 0; fcv = 0; break;
-    default:                          fcb = p->first_fcb; break;
-    }
+    first_fcb(p, &fcb, &fcv);
 
     for (;;) {
         unsigned t;
@@ -604,4 +625,197 @@ mbus_meter_probe(mbus_meter_t *meter, uint32_t *baud_out)
         return aborted(meter) ? MBUS_METER_ERR_ABORTED : MBUS_METER_ERR_TIMEOUT;
     }
     return MBUS_METER_OK;
+}
+
+/* ------------------------------------------------------------------ */
+/* secondary scan, wildcards per byte                                  */
+/* ------------------------------------------------------------------ */
+
+/* Most meters compare the id byte by byte, so a single F nibble is no
+ * wildcard. Each id byte is walked 00..99 with the rest left at FF. */
+
+typedef struct {
+    mbus_handle                 *h;
+    const mbus_meter_profile_t  *p;
+    const mbus_meter_scan_cfg_t *cfg;
+    mbus_meter_scan_result_t     res;
+    int                          err;       /* hard error, 0 = none */
+    bool                         stop;
+} scan_t;
+
+static bool
+scan_aborted(const scan_t *s)
+{
+    return s->h->abort_scan_check != NULL && s->h->abort_scan_check(s->h);
+}
+
+/* select by mask, then read the selected slave to get its full address */
+static int
+scan_probe(scan_t *s, const char *mask, char *addr_out)
+{
+    const mbus_meter_profile_t *p = s->p;
+    unsigned a;
+
+    s->res.probes++;
+    if (s->cfg->on_probe)
+        s->cfg->on_probe(s->cfg->ctx, mask);
+
+    for (a = 0; a <= p->retries; a++) {
+        mbus_frame reply;
+        char buf[32], *addr;
+        int r, fcb, fcv;
+
+        r = mbus_select_secondary_address(s->h, mask);
+        if (r == MBUS_PROBE_ERROR || r == MBUS_PROBE_COLLISION)
+            return r;
+        if (r == MBUS_PROBE_SINGLE) {
+            mbus_meter_port_delay_ms(p->select_settle_ms);
+            first_fcb(p, &fcb, &fcv);
+            if (send_req_ud2(s->h, ADDR_NETWORK, fcb, fcv) != 0)
+                return MBUS_PROBE_ERROR;
+
+            memset(&reply, 0, sizeof(reply));
+            r = mbus_recv_frame(s->h, &reply);
+            if (r == MBUS_RECV_RESULT_OK) {
+                if (mbus_purge_frames(s->h))
+                    return MBUS_PROBE_COLLISION;            /* more than one answered */
+                addr = mbus_frame_get_secondary_address_to_buffer(&reply, buf, sizeof(buf));
+                if (reply.type == MBUS_FRAME_TYPE_LONG && addr != NULL) {
+                    snprintf(addr_out, 17, "%s", addr);
+                    return MBUS_PROBE_SINGLE;
+                }
+            } else if (r == MBUS_RECV_RESULT_INVALID) {
+                mbus_purge_frames(s->h);
+                return MBUS_PROBE_COLLISION;                /* garbled = overlapping answers */
+            } else if (r != MBUS_RECV_RESULT_TIMEOUT) {
+                return MBUS_PROBE_ERROR;
+            }
+        }
+        if (a < p->retries)
+            mbus_meter_port_delay_ms(p->retry_delay_ms);
+    }
+    return MBUS_PROBE_NOTHING;
+}
+
+static void
+scan_report(scan_t *s, const char *addr)
+{
+    s->res.found++;
+    if (s->cfg->on_found && s->cfg->on_found(s->cfg->ctx, addr))
+        s->stop = true;
+    if (s->cfg->max_found && s->res.found >= s->cfg->max_found)
+        s->stop = true;
+}
+
+static bool
+is_ff(const char *b)
+{
+    return (b[0] == 'F' || b[0] == 'f') && (b[1] == 'F' || b[1] == 'f');
+}
+
+/* id byte pos (0 = most significant) of a mask that matched more than one slave */
+static void
+scan_rec(scan_t *s, char *mask, int pos)
+{
+    char *b = &mask[2 * pos];
+    int v;
+
+    if (!is_ff(b)) {                          /* fixed by the caller */
+        if (pos < 3)
+            scan_rec(s, mask, pos + 1);
+        else
+            s->res.unresolved++;
+        return;
+    }
+
+    for (v = 0; v <= 99 && !s->stop && !s->err; v++) {
+        char addr[32];
+        int r;
+
+        b[0] = (char)('0' + v / 10);
+        b[1] = (char)('0' + v % 10);
+        if (scan_aborted(s)) {
+            s->err = MBUS_METER_ERR_ABORTED;
+            break;
+        }
+        r = scan_probe(s, mask, addr);
+        if (r == MBUS_PROBE_SINGLE) {
+            scan_report(s, addr);
+        } else if (r == MBUS_PROBE_COLLISION) {
+            if (pos < 3)
+                scan_rec(s, mask, pos + 1);
+            else
+                s->res.unresolved++;          /* same id, differs in mfr/version/medium */
+        } else if (r == MBUS_PROBE_ERROR) {
+            s->err = MBUS_METER_ERR_LINK;
+        }
+    }
+    b[0] = b[1] = 'F';
+}
+
+static bool
+scan_mask_ok(const char *m)
+{
+    int i;
+
+    if (strlen(m) != 16)
+        return false;
+    for (i = 0; i < 16; i++)
+        if (!((m[i] >= '0' && m[i] <= '9') || (m[i] >= 'A' && m[i] <= 'F') || (m[i] >= 'a' && m[i] <= 'f')))
+            return false;
+    return true;
+}
+
+int
+mbus_meter_scan_secondary(mbus_handle *handle, const mbus_meter_profile_t *profile,
+                          const mbus_meter_scan_cfg_t *cfg, mbus_meter_scan_result_t *result)
+{
+    mbus_meter_profile_t def = MBUS_METER_PROFILE_GENERIC();
+    scan_t s;
+    to_save_t ts;
+    char mask[17], addr[32];
+    int r;
+
+    if (handle == NULL || cfg == NULL || (cfg->mask != NULL && !scan_mask_ok(cfg->mask)))
+        return MBUS_METER_ERR_ARG;
+    if (profile == NULL)
+        profile = &def;
+    else if (profile_check(profile) != MBUS_METER_OK)
+        return MBUS_METER_ERR_ARG;
+
+    memset(&s, 0, sizeof(s));
+    s.h = handle;
+    s.p = profile;
+    s.cfg = cfg;
+    snprintf(mask, sizeof(mask), "%s", cfg->mask ? cfg->mask : "FFFFFFFFFFFFFFFF");
+    for (r = 0; r < 16; r++)
+        if (mask[r] == 'f')
+            mask[r] = 'F';
+
+    to_apply_hp(handle, profile, &ts);
+
+    /* deselect everything first, a slave left selected would answer every probe */
+    if (mbus_send_ping_frame(handle, ADDR_NETWORK, 0) != 0) {
+        s.err = MBUS_METER_ERR_LINK;
+    } else {
+        mbus_meter_port_delay_ms(profile->post_nke_delay_ms);
+        if (scan_aborted(&s)) {
+            s.err = MBUS_METER_ERR_ABORTED;
+        } else {
+            r = scan_probe(&s, mask, addr);
+            if (r == MBUS_PROBE_SINGLE)
+                scan_report(&s, addr);
+            else if (r == MBUS_PROBE_COLLISION)
+                scan_rec(&s, mask, 0);
+            else if (r == MBUS_PROBE_ERROR)
+                s.err = MBUS_METER_ERR_LINK;
+        }
+        if (mbus_send_ping_frame(handle, ADDR_NETWORK, 0) == 0)
+            mbus_meter_port_delay_ms(profile->post_nke_delay_ms);
+    }
+
+    to_restore_h(handle, &ts);
+    if (result)
+        *result = s.res;
+    return s.err ? s.err : (int)s.res.found;
 }
