@@ -255,6 +255,9 @@ parse_records(const uint8_t *p, size_t n, size_t i, const mbus_meter_profile_t *
                 return MBUS_METER_ERR_INVALID_FRAME;     /* reserved special function */
             if (h.dif == 0x1F)
                 *more = true;
+            if (i == n) {                               /* bare marker, nothing worth a record */
+                continue;
+            }
             key.vif = 0;
             if (!key_wanted(prof, &key)) {
                 i = n;
@@ -497,7 +500,9 @@ mbus_meter_decode_frame(const mbus_frame *frame, const mbus_meter_profile_t *pro
     if (profile == NULL)
         profile = &generic;
 
-    if (frame->type != MBUS_FRAME_TYPE_LONG || (frame->control & MBUS_CONTROL_MASK_DIR_M2S)
+    /* the parser types a frame without user data as CONTROL */
+    if ((frame->type != MBUS_FRAME_TYPE_LONG && frame->type != MBUS_FRAME_TYPE_CONTROL)
+        || (frame->control & MBUS_CONTROL_MASK_DIR_M2S)
         || frame->data_size > MBUS_FRAME_DATA_LENGTH)
         return MBUS_METER_ERR_INVALID_FRAME;
 

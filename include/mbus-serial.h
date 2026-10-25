@@ -30,6 +30,8 @@ extern "C" {
 typedef struct {
     mbus_serial_config_t cfg;
     bool installed;       /* true while the UART driver is installed by us */
+    int  rx_first_ms;     /* wait for the first byte of a frame, 0 = cfg.rx_timeout_ms */
+    int  rx_gap_ms;       /* wait between bytes inside a frame, 0 = cfg.rx_timeout_ms */
 } mbus_serial_data;
 
 int  mbus_serial_connect(mbus_handle *handle);
@@ -39,6 +41,9 @@ int  mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame);
 int  mbus_serial_set_baudrate(mbus_handle *handle, long baudrate);
 int  mbus_serial_set_parity(mbus_handle *handle, uart_parity_t parity);
 int  mbus_serial_write_raw(mbus_handle *handle, const void *data, size_t len);
+int  mbus_serial_set_rx_timeouts(mbus_handle *handle, int first_byte_ms, int gap_ms);
+int  mbus_serial_get_rx_timeouts(mbus_handle *handle, int *first_byte_ms, int *gap_ms);
+int  mbus_serial_flush_rx(mbus_handle *handle);
 void mbus_serial_data_free(mbus_handle *handle);
 
 #ifdef __cplusplus

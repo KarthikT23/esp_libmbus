@@ -32,6 +32,9 @@ typedef struct {
     int      silent_requests;      /* ignore the next N REQ_UD2 */
     int      repeat_last;          /* stay on the last telegram instead of wrapping */
     int      select_resets_fcb;    /* default 1 */
+    unsigned silent_after;         /* ignore REQ_UD2 once this many were answered, 0 = off */
+    int      needs_wakeup;         /* deaf until a wake-up burst was seen */
+    int      awake;
 
     /* state */
     int      idx;                  /* next telegram */
@@ -60,9 +63,16 @@ typedef struct {
     fs_log_entry log[FS_LOG_MAX];
     int      n_log;
     unsigned recv_calls;
+
+    long     baud;                 /* set by the serial stub */
+    long     slave_baud;           /* slaves only hear this baud, 0 = any */
+    unsigned wakeups;              /* wake-up bursts seen */
+    unsigned flushes;              /* rx flush calls */
 } fs_bus;
 
 void   fs_init(fs_bus *b);
+void   fs_wakeup(fs_bus *b);               /* wake-up burst arrived */
+void   fs_sleep(fs_bus *b);                /* put wake-up slaves back to sleep */
 int    fs_add_slave(fs_bus *b, int primary, const char *sec16, fs_fcb_mode mode);
 void   fs_add_tg(fs_bus *b, int slave, const uint8_t *tg, size_t len);
 void   fs_set_reduced(fs_bus *b, int slave, const uint8_t *tg, size_t len);

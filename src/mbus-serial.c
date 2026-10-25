@@ -116,6 +116,47 @@ mbus_serial_write_raw(mbus_handle *handle, const void *data, size_t len)
     return 0;
 }
 
+/* 0 = derive from cfg.rx_timeout_ms / baudrate. A non-zero first_byte_ms also makes
+    * "no answer" cost one wait instead of three. */
+int
+mbus_serial_set_rx_timeouts(mbus_handle *handle, int first_byte_ms, int gap_ms)
+{
+    mbus_serial_data *sd;
+
+    if (handle == NULL || (sd = (mbus_serial_data *)handle->auxdata) == NULL ||
+        first_byte_ms < 0 || gap_ms < 0)
+        return -1;
+
+    sd->rx_first_ms = first_byte_ms;
+    sd->rx_gap_ms = gap_ms;
+    return 0;
+}
+
+int
+mbus_serial_get_rx_timeouts(mbus_handle *handle, int *first_byte_ms, int *gap_ms)
+{
+    mbus_serial_data *sd;
+
+    if (handle == NULL || (sd = (mbus_serial_data *)handle->auxdata) == NULL ||
+        first_byte_ms == NULL || gap_ms == NULL)
+        return -1;
+
+    *first_byte_ms = sd->rx_first_ms;
+    *gap_ms = sd->rx_gap_ms;
+    return 0;
+}
+
+int
+mbus_serial_flush_rx(mbus_handle *handle)
+{
+    mbus_serial_data *sd;
+
+    if (handle == NULL || (sd = (mbus_serial_data *)handle->auxdata) == NULL || !sd->installed)
+        return -1;
+
+    return uart_flush_input(sd->cfg.port) == ESP_OK ? 0 : -1;
+}
+
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -240,7 +281,8 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
     }
     const int rd_ms = sd->cfg.rx_timeout_ms > 0 ? sd->cfg.rx_timeout_ms
                                                 : mbus_serial_timeout_ms(sd->cfg.baudrate);
-    const TickType_t rd_timeout = pdMS_TO_TICKS(rd_ms);
+    const TickType_t first_timeout = pdMS_TO_TICKS(sd->rx_first_ms > 0 ? sd->rx_first_ms : rd_ms);
+    const TickType_t gap_timeout = pdMS_TO_TICKS(sd->rx_gap_ms > 0 ? sd->rx_gap_ms : rd_ms);
 
     memset((void *)buff, 0, sizeof(buff));
 
@@ -260,7 +302,8 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
 
         //printf("%s: Attempt to read %d bytes [len = %d]\n", __PRETTY_FUNCTION__, remaining, len);
 
-        if ((nread = uart_read_bytes(sd->cfg.port, &buff[len], remaining, rd_timeout)) < 0)
+        if ((nread =    uart_read_bytes(sd->cfg.port, &buff[len], remaining,
+                                         len == 0 ? first_timeout : gap_timeout)) < 0)
         {
        //     fprintf(stderr, "%s: aborting recv frame (remaining = %d, len = %d, nread = %d)\n",
          //          __PRETTY_FUNCTION__, remaining, len, nread);
@@ -273,7 +316,8 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
         {
             timeouts++;
 
-            if (timeouts >= 3)
+        /* explicit first-byte wait: silence is an answer, do not wait three times */
+        if (timeouts >= 3 || (len == 0 && sd->rx_first_ms > 0))
             {
                 // abort to avoid endless loop
                 fprintf(stderr, "%s: Timeout\n", __PRETTY_FUNCTION__);

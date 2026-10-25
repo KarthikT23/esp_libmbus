@@ -128,6 +128,28 @@ void fs_init(fs_bus *b)
     memset(b, 0, sizeof(*b));
 }
 
+void fs_wakeup(fs_bus *b)
+{
+    int i;
+
+    b->wakeups++;
+    for (i = 0; i < b->n_slaves; i++)
+        b->slave[i].awake = 1;
+}
+
+void fs_sleep(fs_bus *b)
+{
+    int i;
+
+    for (i = 0; i < b->n_slaves; i++)
+        b->slave[i].awake = 0;
+}
+
+static int deaf(const fs_slave *s)
+{
+    return s->needs_wakeup && !s->awake;
+}
+
 int fs_add_slave(fs_bus *b, int primary, const char *sec16, fs_fcb_mode mode)
 {
     fs_slave *s;
@@ -194,6 +216,8 @@ static void answer(fs_bus *b, fs_slave *s, int fcb, int fcv)
     int new_frame, i;
 
     s->requests++;
+    if (s->silent_after && s->requests > s->silent_after)
+        return;
     if (s->silent_requests > 0) {
         s->silent_requests--;
         return;
@@ -238,6 +262,8 @@ static int match_primary(fs_bus *b, int addr, int *out, int max)
     for (i = 0; i < b->n_slaves && n < max; i++) {
         fs_slave *s = &b->slave[i];
 
+        if (deaf(s))
+            continue;
         if (addr == 253) {
             if (s->selected)
                 out[n++] = i;
@@ -279,7 +305,7 @@ static void handle_select(fs_bus *b, const mbus_frame *f)
         uint8_t own[8];
 
         s->selected = 0;
-        if (s->sec[0] == '\0' || sec_bytes(s->sec, own) != 0)
+        if (deaf(s) || s->sec[0] == '\0' || sec_bytes(s->sec, own) != 0)
             continue;
         if (sec_match(f->data, own)) {
             s->selected = 1;
@@ -294,7 +320,7 @@ static void handle_select(fs_bus *b, const mbus_frame *f)
 
 static int fs_send(mbus_handle *h, mbus_frame *f)
 {
-    fs_bus *b = (fs_bus *)h->auxdata;
+    fs_bus *b = (fs_bus *)h->userdata;
     uint8_t pk[600];
     static const uint8_t ack = 0xE5;
     int n, fn, t[FS_MAX_SLAVES], nt, i;
@@ -316,6 +342,9 @@ static int fs_send(mbus_handle *h, mbus_frame *f)
 
     if (b->echo)
         rxq_push(b, pk, (size_t)n);
+
+    if (b->slave_baud && b->baud != b->slave_baud)
+        return 0;                                    /* wrong baud: slaves hear noise */
 
     fn = f->control & 0x0F;
 
@@ -360,7 +389,7 @@ static int fs_send(mbus_handle *h, mbus_frame *f)
 
 static int fs_recv(mbus_handle *h, mbus_frame *frame)
 {
-    fs_bus *b = (fs_bus *)h->auxdata;
+    fs_bus *b = (fs_bus *)h->userdata;
     unsigned char buff[2048];
     int remaining = 1;
     size_t len = 0;
@@ -410,7 +439,7 @@ mbus_handle *fs_handle(fs_bus *b)
     h->close = fs_nop;
     h->send = fs_send;
     h->recv = fs_recv;
-    h->auxdata = b;
+    h->userdata = b;                  /* auxdata stays free for a serial stand-in */
     return h;
 }
 

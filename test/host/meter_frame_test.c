@@ -298,8 +298,8 @@ test_lvar_special(void)
     mbus_meter_readout_free(&out);
 
     mbus_meter_readout_init(&out);
-    CHECK(run72(more, sizeof(more), NULL, &out) == MBUS_METER_OK && out.n_records == 2 && out.more_follows);
-    CHECK(out.records[1].dif == 0x1F && out.records[1].value.bytes.len == 0);
+    CHECK(run72(more, sizeof(more), NULL, &out) == MBUS_METER_OK && out.n_records == 1 && out.more_follows);
+    CHECK(out.records[0].dif == 0x04);                  /* the bare 1F marker is not a record */
     mbus_meter_readout_free(&out);
 
     mbus_meter_readout_init(&out);
@@ -577,11 +577,20 @@ compare_file(const char *dir, const char *name)
                 bad++;
             }
         }
-        if (d.data_var.nrecords != out.n_records) {
-            printf("DIFF %s: records lib=%zu ours=%zu\n", name, d.data_var.nrecords, out.n_records);
-            bad++;
+        {
+            size_t lib_n = 0;
+
+            for (lr = d.data_var.record; lr; lr = (mbus_data_record *)lr->next)
+                if (!((lr->drh.dib.dif & 0x0F) == 0x0F && lr->data_len == 0))
+                    lib_n++;                         /* bare 0F/1F markers are not records here */
+            if (lib_n != out.n_records) {
+                printf("DIFF %s: records lib=%zu ours=%zu\n", name, lib_n, out.n_records);
+                bad++;
+            }
         }
-        for (lr = d.data_var.record; lr && i < out.n_records; lr = (mbus_data_record *)lr->next, i++) {
+        for (lr = d.data_var.record; lr && i < out.n_records; lr = (mbus_data_record *)lr->next) {
+            if ((lr->drh.dib.dif & 0x0F) == 0x0F && lr->data_len == 0)
+                continue;
             const mbus_meter_record_t *r = &out.records[i];
             long st = mbus_data_record_storage_number(lr);
             long tf = mbus_data_record_tariff(lr);
@@ -611,6 +620,7 @@ compare_file(const char *dir, const char *name)
                        lr->drh.dib.dif, lr->drh.vib.vif, rb);
                 bad++;
             }
+            i++;
         }
         if (bad) g_cmp_bad++; else g_cmp_ok++;
         mbus_data_record_free(d.data_var.record);
