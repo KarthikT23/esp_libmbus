@@ -5,6 +5,7 @@ set(mbus_srcs
     "src/mbus-serial.c"
     "src/mbus-link.c"
     "src/mbus-meter-record.c"
+    "src/mbus-meter-frame.c"
 )
 
 if(CONFIG_MBUS_ENABLE_TCP)

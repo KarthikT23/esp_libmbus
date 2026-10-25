@@ -281,6 +281,7 @@ typedef struct {
     mbus_meter_end_reason_t  end_reason;
     int                      last_err;      /* mbus_meter_err_t that ended the read, 0 if none */
     uint8_t                  app_error;     /* CI 0x70 error byte */
+    bool                     more_follows;  /* last decoded frame ended with DIF 0x1F */
 } mbus_meter_readout_t;
 
 /* ------------------------------------------------------------------ */
