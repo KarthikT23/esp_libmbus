@@ -3814,8 +3814,8 @@ mbus_data_fixed_parse(mbus_frame *frame, mbus_data_fixed *data)
 //------------------------------------------------------------------------------
 /// Parse the variable-length data of a M-Bus frame
 //------------------------------------------------------------------------------
-int
-mbus_data_variable_parse(mbus_frame *frame, mbus_data_variable *data)
+static int
+variable_parse(mbus_frame *frame, mbus_data_variable *data, size_t hdr_len)
 {
     mbus_data_record *record = NULL;
     size_t i, j;
@@ -3825,7 +3825,7 @@ mbus_data_variable_parse(mbus_frame *frame, mbus_data_variable *data)
         // parse header
         data->nrecords = 0;
         data->more_records_follow = 0;
-        i = MBUS_DATA_VARIABLE_HEADER_LENGTH;
+        i = hdr_len;
 
         if(frame->data_size < i)
         {
@@ -3833,19 +3833,33 @@ mbus_data_variable_parse(mbus_frame *frame, mbus_data_variable *data)
             return -1;
         }
 
-        // first copy the variable data fixed header bytewise
-        data->header.id_bcd[0]       = frame->data[0];
-        data->header.id_bcd[1]       = frame->data[1];
-        data->header.id_bcd[2]       = frame->data[2];
-        data->header.id_bcd[3]       = frame->data[3];
-        data->header.manufacturer[0] = frame->data[4];
-        data->header.manufacturer[1] = frame->data[5];
-        data->header.version         = frame->data[6];
-        data->header.medium          = frame->data[7];
-        data->header.access_no       = frame->data[8];
-        data->header.status          = frame->data[9];
-        data->header.signature[0]    = frame->data[10];
-        data->header.signature[1]    = frame->data[11];
+        memset(&data->header, 0, sizeof(data->header));
+
+        if (hdr_len == 4)
+        {
+            /* CI 0x7A: short header */
+            data->header.access_no    = frame->data[0];
+            data->header.status       = frame->data[1];
+            data->header.signature[0] = frame->data[2];
+            data->header.signature[1] = frame->data[3];
+        }
+        else if (hdr_len == MBUS_DATA_VARIABLE_HEADER_LENGTH)
+        {
+            // first copy the variable data fixed header bytewise
+            data->header.id_bcd[0]       = frame->data[0];
+            data->header.id_bcd[1]       = frame->data[1];
+            data->header.id_bcd[2]       = frame->data[2];
+            data->header.id_bcd[3]       = frame->data[3];
+            data->header.manufacturer[0] = frame->data[4];
+            data->header.manufacturer[1] = frame->data[5];
+            data->header.version         = frame->data[6];
+            data->header.medium          = frame->data[7];
+            data->header.access_no       = frame->data[8];
+            data->header.status          = frame->data[9];
+            data->header.signature[0]    = frame->data[10];
+            data->header.signature[1]    = frame->data[11];
+        }
+        /* CI 0x78: no header, identity fields stay zero */
 
         data->record = NULL;
 
@@ -4077,6 +4091,12 @@ mbus_data_variable_parse(mbus_frame *frame, mbus_data_variable *data)
     return -1;
 }
 
+int
+mbus_data_variable_parse(mbus_frame *frame, mbus_data_variable *data)
+{
+    return variable_parse(frame, data, MBUS_DATA_VARIABLE_HEADER_LENGTH);
+}
+
 //------------------------------------------------------------------------------
 /// Check the stype of the frame data (error, fixed or variable) and dispatch to the
 /// corresponding parser function.
@@ -4140,6 +4160,19 @@ mbus_frame_data_parse(mbus_frame *frame, mbus_frame_data *data)
 
             data->type = MBUS_DATA_TYPE_VARIABLE;
             return mbus_data_variable_parse(frame, &(data->data_var));
+        }
+        else if (frame->control_information == MBUS_CONTROL_INFO_RESP_VARIABLE_NOHDR ||
+                 frame->control_information == MBUS_CONTROL_INFO_RESP_VARIABLE_SHORT)
+        {
+            if (frame->data_size == 0)
+            {
+                snprintf(error_str, sizeof(error_str), "Got zero data_size.");
+                return -1;
+            }
+
+            data->type = MBUS_DATA_TYPE_VARIABLE;
+            return variable_parse(frame, &(data->data_var),
+                (frame->control_information == MBUS_CONTROL_INFO_RESP_VARIABLE_SHORT) ? 4 : 0);
         }
         else
         {

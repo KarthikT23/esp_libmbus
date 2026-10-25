@@ -418,6 +418,8 @@ typedef struct _mbus_data_secondary_address {
 
 #define MBUS_CONTROL_INFO_RESP_VARIABLE      0x72
 #define MBUS_CONTROL_INFO_RESP_VARIABLE_MSB  0x76
+#define MBUS_CONTROL_INFO_RESP_VARIABLE_NOHDR 0x78  /* variable data, no header */
+#define MBUS_CONTROL_INFO_RESP_VARIABLE_SHORT 0x7A  /* variable data, 4 byte header */
 
 //
 // DATA BITS
