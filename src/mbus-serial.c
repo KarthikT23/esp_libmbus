@@ -58,6 +58,9 @@ mbus_serial_connect(mbus_handle *handle)
         if (uart_is_driver_installed(sd->cfg.port)) uart_driver_delete(sd->cfg.port);
         return -1;
     }
+    /* default threshold is 120 bytes: a continuous frame stays in the hw fifo
+       and uart_read_bytes sees nothing until it is half over. 1 = per byte. */
+    uart_set_rx_full_threshold(sd->cfg.port, 1);
 
     sd->installed = true;
     uart_flush_input(sd->cfg.port);
@@ -242,7 +245,10 @@ mbus_serial_send_frame(mbus_handle *handle, mbus_frame *frame)
     //
     // wait until complete frame has been transmitted
     //
-    uart_wait_tx_done(sd->cfg.port, pdMS_TO_TICKS(500));
+    /* bound by line time (12 bit times per byte + 20 ms): a missed tx-done
+     interrupt must not cost 500 ms */
+    uart_wait_tx_done(sd->cfg.port,
+                    pdMS_TO_TICKS((uint32_t)((uint64_t)len * 12 * 1000 / sd->cfg.baudrate) + 20));
 
     return 0;
 }
@@ -316,7 +322,7 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
         {
             timeouts++;
 
-        /* explicit first-byte wait: silence is an answer, do not wait three times */
+        /* explicit first-byte wait: silence ends the receive at once */
         if (timeouts >= 3 || (len == 0 && sd->rx_first_ms > 0))
             {
                 // abort to avoid endless loop
