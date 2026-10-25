@@ -724,7 +724,8 @@ mbus_variable_vif fixed_table[] = {
     { 0x2D, 1.0e1, "m^3", "Volume" },
     { 0x2E, 1.0e2, "m^3", "Volume" },
 
-    { 0x2F, 1.0e-5,"m^3/h", "Volume flow" },
+    { 0x2F, 1.0e-6,"m^3/h", "Volume flow" },
+    { 0x30, 1.0e-5,"m^3/h", "Volume flow" },
     { 0x31, 1.0e-4,"m^3/h", "Volume flow" },
     { 0x32, 1.0e-3,"m^3/h", "Volume flow" },
     { 0x33, 1.0e-2,"m^3/h", "Volume flow" },
@@ -2036,7 +2037,7 @@ mbus_send_application_reset_frame(mbus_handle * handle, int address, int subcode
 // send a request packet to from master to slave
 //------------------------------------------------------------------------------
 int
-mbus_send_request_frame(mbus_handle * handle, int address)
+mbus_send_request_frame_fcb(mbus_handle * handle, int address, int fcb)
 {
     int retval = 0;
     mbus_frame *frame;
@@ -2056,6 +2057,8 @@ mbus_send_request_frame(mbus_handle * handle, int address)
     }
 
     frame->control = MBUS_CONTROL_MASK_REQ_UD2 | MBUS_CONTROL_MASK_DIR_M2S;
+    if (fcb)
+        frame->control |= MBUS_CONTROL_MASK_FCB;   /* 0x5B -> 0x7B */
     frame->address = address;
 
     if (mbus_send_frame(handle, frame) == -1)
@@ -2066,6 +2069,12 @@ mbus_send_request_frame(mbus_handle * handle, int address)
 
     mbus_frame_free(frame);
     return retval;
+}
+
+int
+mbus_send_request_frame(mbus_handle * handle, int address)
+{
+    return mbus_send_request_frame_fcb(handle, address, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -2610,7 +2619,7 @@ mbus_scan_2nd_address_range_internal(mbus_handle * handle, int pos, const char *
     {
         // mask[pos] is a wildcard -> enumerate all 0..9 at this position
         i_start = 0;
-        i_end   = 9;
+        i_end   = (pos >= 8) ? 15 : 9;   /* pos 8..15 are hex fields */
     }
     else
     {
@@ -2632,8 +2641,8 @@ mbus_scan_2nd_address_range_internal(mbus_handle * handle, int pos, const char *
         else
         {
             // .. except if we're at the last pos (==15) and this isn't a wildcard we still need to send the probe
-            i_start = (int)(mask[pos] - '0');
-            i_end   = (int)(mask[pos] - '0');
+            i_start = i_end = (mask[pos] <= '9') ? mask[pos] - '0'
+                                                  : (mask[pos] & 0xDF) - 'A' + 10;
         }
     }
 
@@ -2642,7 +2651,7 @@ mbus_scan_2nd_address_range_internal(mbus_handle * handle, int pos, const char *
     {
         for (i = i_start; i <= i_end; i++)
         {
-            mask[pos] = '0'+i;
+            mask[pos] = "0123456789ABCDEF"[i];
 
             if (handle->abort_scan_check && handle->abort_scan_check(handle))
             {

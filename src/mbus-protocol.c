@@ -1549,10 +1549,10 @@ mbus_data_fixed_unit(int medium_unit_byte)
         case 0x0C:
             snprintf(buff, sizeof(buff), "10 kJ");
             break;
-        case 0x0E:
+        case 0x0D:
             snprintf(buff, sizeof(buff), "100 kJ");
             break;
-        case 0x0D:
+        case 0x0E:
             snprintf(buff, sizeof(buff), "MJ");
             break;
         case 0x0F:

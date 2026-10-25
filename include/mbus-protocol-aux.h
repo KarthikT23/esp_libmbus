@@ -319,6 +319,18 @@ int mbus_send_switch_baudrate_frame(mbus_handle * handle, int address, long baud
 int mbus_send_request_frame(mbus_handle * handle, int address);
 
 /**
+ * Sends REQ_UD2 with a chosen frame count bit (0 = 0x5B, 1 = 0x7B).
+ * Some meters only answer the first request after reset/select with FCB=1.
+ *
+ * @param handle  Initialized handle
+ * @param address Address (0-255)
+ * @param fcb     Frame count bit
+ *
+ * @return Zero when successful.
+ */
+int mbus_send_request_frame_fcb(mbus_handle * handle, int address, int fcb);
+
+/**
  * Sends user data frame (SND_UD) to given slave using "unified" handle
  *
  * @param handle    Initialized handle
