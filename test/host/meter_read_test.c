@@ -350,10 +350,10 @@ t_retry(void)
     fs_init(&b);
     s = fs_add_slave(&b, 5, NULL, FS_FCB_STRICT);
     add_multi(&b, s, 5, SEC_A, 2, 1);
-    b.corrupt_next = 1;                                /* bad checksum on the NKE ack? no: first data frame */
+    b.corrupt_next = 1;                                /* first data frame arrives with a bad checksum */
     b.slave[s].silent_requests = 0;
     rc = mbus_meter_read(m, &out);
-    CHECK(rc == MBUS_METER_OK && out.frames == 2, "corrupt/ack mix rc=%d", rc);
+    CHECK(rc == MBUS_METER_OK && out.frames == 2, "corrupt first frame, retried: rc=%d", rc);
     mbus_meter_readout_free(&out);
 
     fs_init(&b);
