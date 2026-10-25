@@ -41,6 +41,7 @@
 #endif
 #include "mbus-serial.h"
 #include "mbus-link.h"
+#include "mbus-meter.h"
 
 #ifdef __cplusplus
 extern "C" {
