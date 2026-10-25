@@ -237,6 +237,8 @@ test_plain_text(void)
     const uint8_t c[] = { 0x04, 0x7C, 0x03, 'h', 'W', 'k', 0x0A, 0x00, 0x00, 0x00 };
     /* text longer than the frame */
     const uint8_t d[] = { 0x04, 0x7C, 0x20, 'h', 'W', 'k' };
+    /* record from the upstream libmbus PR 229 test frame: 24 bit int, VIF FC, VIFE 20, "ABC" */
+    const uint8_t e[] = { 0x03, 0xFC, 0x20, 0x03, 'C', 'B', 'A', 0x15, 0x31, 0x00 };
 
     mbus_meter_readout_init(&out);
     CHECK(run72(a, sizeof(a), NULL, &out) == MBUS_METER_OK && out.n_records == 1);
@@ -259,6 +261,14 @@ test_plain_text(void)
 
     mbus_meter_readout_init(&out);
     CHECK(run72(d, sizeof(d), NULL, &out) == MBUS_METER_ERR_INVALID_FRAME && out.n_records == 0);
+    mbus_meter_readout_free(&out);
+
+    
+    mbus_meter_readout_init(&out);
+    CHECK(run72(e, sizeof(e), NULL, &out) == MBUS_METER_OK && out.n_records == 1);
+    r = &out.records[0];
+    CHECK(r->unit_text && strcmp(r->unit_text, "ABC") == 0 && r->value.i == 12565);
+    CHECK(r->key.vif == 0xFC && r->key.n_vife == 1 && r->key.vife[0] == 0x20 && r->key.storage == 0);
     mbus_meter_readout_free(&out);
 }
 

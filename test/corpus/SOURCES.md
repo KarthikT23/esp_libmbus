@@ -9,6 +9,7 @@ Frames are data only. Hex bytes, no code copied.
 | pymb_elv_v20_64000392_a4.hex | Elvaco comm controller (medium 0x31) | gateway | ganehag/pyMeterBus (tests) | BSD-3-Clause |
 | pymb_elv_v50_54000834_a242.hex | Elvaco temp/humidity | sensor | ganehag/pyMeterBus (tests) | BSD-3-Clause |
 | wep_indoor.hex | WEP room sensor | room sensor | ganehag/pyMeterBus (tests) | BSD-3-Clause |
+| libmbus_pr229_plain_text.hex | synthetic, VIF FC with VIFE before the text | water | rscada/libmbus PR 229 (open, test frame) | BSD-3-Clause |
 
 The gombus frames are labelled synthesized/hand-validated upstream, not live captures.
 Upstream libmbus frames live in test/test-frames (BSD-3-Clause).
