@@ -360,7 +360,7 @@ int mbus_set_primary_address(mbus_handle * handle, int old_address, int new_addr
  * @param handle     Initialized handle
  * @param address    Address (0-255)
  * @param reply      pointer to an mbus frame for the reply
- * @param max_frames limit of frames to readout (0 = no limit)
+ * @param max_frames limit of frames to readout (0 = library cap of 32)
  *
  * @return Zero when successful.
  */

@@ -34,6 +34,8 @@
 /*@end@*/
 
 static int debug = 0;
+#define MBUS_PURGE_MAX_FRAMES     64   /* stop draining a jammed bus */
+#define MBUS_SENDRECV_MAX_FRAMES  32   /* cap when max_frames == 0 */
 
 typedef struct _mbus_variable_vif {
     unsigned     vif;
@@ -1686,6 +1688,7 @@ mbus_context_tcp(const char *host, uint16_t port)
         free(handle);
         return NULL;
     }
+    memset(tcp_data, 0, sizeof(*tcp_data));
 
     handle->max_data_retry = 3;
     handle->max_search_retry = 1;
@@ -1847,13 +1850,13 @@ mbus_recv_frame(mbus_handle * handle, mbus_frame *frame)
 
 int mbus_purge_frames(mbus_handle *handle)
 {
-    int err, received;
+    int err, received, guard;
     mbus_frame reply;
 
     memset((void *)&reply, 0, sizeof(mbus_frame));
 
     received = 0;
-    while (1)
+    for (guard = MBUS_PURGE_MAX_FRAMES; guard > 0; guard--)
     {
         err = mbus_recv_frame(handle, &reply);
         if (err != MBUS_RECV_RESULT_OK &&
@@ -2280,7 +2283,7 @@ mbus_sendrecv_request(mbus_handle *handle, int address, mbus_frame *reply, int m
             more_frames = 0;
 
             if (reply_data.data_var.more_records_follow &&
-                ((max_frames > 0) && (frame_count < max_frames))) // only readout max_frames
+                (frame_count < ((max_frames > 0) ? max_frames : MBUS_SENDRECV_MAX_FRAMES)))
             {
                 if (debug)
                     printf("%s: debug: expecting more frames\n", __PRETTY_FUNCTION__);
@@ -2619,7 +2622,7 @@ mbus_scan_2nd_address_range_internal(mbus_handle * handle, int pos, const char *
     {
         // mask[pos] is a wildcard -> enumerate all 0..9 at this position
         i_start = 0;
-        i_end   = (pos >= 8) ? 15 : 9;   /* pos 8..15 are hex fields */
+        i_end   = 9;
     }
     else
     {
