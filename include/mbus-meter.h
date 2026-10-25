@@ -87,6 +87,7 @@ typedef enum {
 #define MBUS_METER_F_HAS_ADDITIVE  0x0020u  /* VIFE 0x78..0x7B, see add_exp */
 #define MBUS_METER_F_FIXED_STRUCT  0x0040u  /* from a fixed-structure frame (CI 0x73) */
 #define MBUS_METER_F_UNSIGNED_FORCED 0x0080u /* profile.unsigned_ints applied */
+#define MBUS_METER_F_BCD_AS_HEX    0x0100u  /* BCD under error function read as hex digits */
 
 /* stable identity of a record; never use the record index */
 typedef struct {
@@ -150,7 +151,27 @@ typedef enum {
     MBUS_METER_QTY_TARIFF_DURATION,
     MBUS_METER_QTY_BATTERY_LIFE,
     MBUS_METER_QTY_PLAIN_TEXT,           /* VIF 0x7C/0xFC */
-    MBUS_METER_QTY_MANUFACTURER_SPECIFIC /* VIF 0x7F/0xFF */
+    MBUS_METER_QTY_MANUFACTURER_SPECIFIC, /* VIF 0x7F/0xFF */
+    MBUS_METER_QTY_ANY_VIF,
+    MBUS_METER_QTY_DIMENSIONLESS,
+    MBUS_METER_QTY_ACCESS_CODE,
+    MBUS_METER_QTY_PASSWORD,
+    MBUS_METER_QTY_STORAGE_BLOCK,
+    MBUS_METER_QTY_STORAGE_INTERVAL,
+    MBUS_METER_QTY_READOUT_DURATION,
+    MBUS_METER_QTY_TARIFF_START,
+    MBUS_METER_QTY_TARIFF_PERIOD,
+    MBUS_METER_QTY_RESET_COUNTER,
+    MBUS_METER_QTY_CUMULATION_COUNTER,
+    MBUS_METER_QTY_CONTROL_SIGNAL,
+    MBUS_METER_QTY_DAY_OF_WEEK,
+    MBUS_METER_QTY_WEEK_NUMBER,
+    MBUS_METER_QTY_DAY_CHANGE_TIME,
+    MBUS_METER_QTY_PARAM_ACTIVATION,
+    MBUS_METER_QTY_SUPPLIER_INFO,
+    MBUS_METER_QTY_CUMULATION_DURATION,
+    MBUS_METER_QTY_BATTERY_CHANGE_DATE,
+    MBUS_METER_QTY_TEMP_LIMIT
 } mbus_meter_qty_t;
 
 /* base unit, SI prefix lives in exp10 */
@@ -230,6 +251,7 @@ typedef struct {
     uint16_t           flags;    /* MBUS_METER_F_* */
     uint8_t           *raw;      /* original data bytes, only with profile.keep_raw */
     uint16_t           raw_len;
+    char              *unit_text; /* plain-text VIF unit (VIF 0x7C/0xFC), heap, else NULL */
     mbus_meter_value_t value;
 } mbus_meter_record_t;
 
