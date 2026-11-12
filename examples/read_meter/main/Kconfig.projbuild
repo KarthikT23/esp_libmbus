@@ -1,0 +1,94 @@
+menu "read_meter example"
+
+    config EXAMPLE_UART_PORT
+        int "UART port"
+        default 1
+        help
+            UART0 is normally the console. C3 has UART0 and UART1 only.
+
+    config EXAMPLE_UART_TX_PIN
+        int "UART TX GPIO"
+        default 6 if IDF_TARGET_ESP32C6
+        default 4 if IDF_TARGET_ESP32C3
+        default 17 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S3
+        default 4
+
+    config EXAMPLE_UART_RX_PIN
+        int "UART RX GPIO"
+        default 7 if IDF_TARGET_ESP32C6
+        default 5 if IDF_TARGET_ESP32C3
+        default 16 if IDF_TARGET_ESP32
+        default 18 if IDF_TARGET_ESP32S3
+        default 5
+
+    config EXAMPLE_BAUDRATE
+        int "Baud rate"
+        default 2400
+        help
+            Ignored for the read if baud probing is enabled and finds a rate.
+
+    choice EXAMPLE_ADDR_MODE
+        prompt "Slave address type"
+        default EXAMPLE_ADDR_PRIMARY
+
+        config EXAMPLE_ADDR_PRIMARY
+            bool "Primary"
+        config EXAMPLE_ADDR_SECONDARY
+            bool "Secondary"
+    endchoice
+
+    config EXAMPLE_PRIMARY_ADDR
+        int "Primary address"
+        range 0 250
+        default 1
+        depends on EXAMPLE_ADDR_PRIMARY
+
+    config EXAMPLE_SECONDARY_ADDR
+        string "Secondary address (16 hex digits)"
+        default "FFFFFFFFFFFFFFFF"
+        depends on EXAMPLE_ADDR_SECONDARY
+        help
+            id(8) manufacturer(4) version(2) medium(2). FF bytes are wildcards.
+            All wildcards only works with a single slave on the bus.
+
+    choice EXAMPLE_PROFILE
+        prompt "Meter profile"
+        default EXAMPLE_PROFILE_GENERIC
+
+        config EXAMPLE_PROFILE_GENERIC
+            bool "Generic"
+        config EXAMPLE_PROFILE_STRICT_FCB
+            bool "Strict NKE + FCB"
+        config EXAMPLE_PROFILE_SLOW
+            bool "Slow answer window"
+        config EXAMPLE_PROFILE_OPTICAL
+            bool "Optical head (wake-up burst)"
+    endchoice
+
+    config EXAMPLE_PROBE_BAUD
+        bool "Probe the profile baud list before reading"
+        default n
+
+    config EXAMPLE_SCAN_AT_START
+        bool "Run a secondary address scan once at start"
+        default n
+        help
+            Needs about 100 probes per collision level. Slow on a real bus.
+
+    config EXAMPLE_SCAN_FIRST_BYTE_MS
+        int "Scan: first-byte wait per probe (ms)"
+        range 20 2000
+        default 120
+        depends on EXAMPLE_SCAN_AT_START
+
+    config EXAMPLE_INTERVAL_S
+        int "Read interval (s)"
+        range 1 3600
+        default 10
+
+    config EXAMPLE_TASK_STACK
+        int "Reader task stack (bytes)"
+        range 3072 16384
+        default 4096
+
+endmenu
