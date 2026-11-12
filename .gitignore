@@ -81,3 +81,5 @@ CMakeLists.txt.user*.exe
 
 *.exe
 .clangd
+
+*.patch
