@@ -1,0 +1,22 @@
+menu "esp_libmbus test app"
+
+    config TB_UART_TX_PIN
+        int "UART TX GPIO (jumper to RX)"
+        default 6 if IDF_TARGET_ESP32C6
+        default 4 if IDF_TARGET_ESP32C3
+        default 17 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S3
+        default 4
+
+    config TB_UART_RX_PIN
+        int "UART RX GPIO (jumper to TX)"
+        default 7 if IDF_TARGET_ESP32C6
+        default 5 if IDF_TARGET_ESP32C3
+        default 16 if IDF_TARGET_ESP32
+        default 18 if IDF_TARGET_ESP32S3
+        default 5
+
+    config TB_RUN_MENU
+        bool "Unity menu instead of running all tests"
+        default n
+
+endmenu

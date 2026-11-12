@@ -1,0 +1,2 @@
+# tests run in the main task, frame structs and Unity output need room
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
