@@ -25,6 +25,8 @@
 #include "mbus-protocol-aux.h"
 #include "mbus-protocol.h"
 
+static const char *TAG = "mbus_serial";
+
 #define PACKET_BUFF_SIZE 512   /* max telegram is 261 bytes */
 
 //------------------------------------------------------------------------------
@@ -326,7 +328,7 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
         if (timeouts >= 3 || (len == 0 && sd->rx_first_ms > 0))
             {
                 // abort to avoid endless loop
-                fprintf(stderr, "%s: Timeout\n", __PRETTY_FUNCTION__);
+                ESP_LOGD(TAG, "rx timeout");
                 break;
             }
         }
