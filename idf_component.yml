@@ -1,0 +1,27 @@
+version: "0.1.0"
+description: "M-Bus (Meter-Bus) master for ESP-IDF: typed meter readout, secondary scan, read profiles. Based on rscada libmbus."
+url: "https://github.com/KarthikT23/esp_libmbus"
+repository: "https://github.com/KarthikT23/esp_libmbus.git"
+documentation: "https://github.com/KarthikT23/esp_libmbus/blob/main/docs/usage.md"
+issues: "https://github.com/KarthikT23/esp_libmbus/issues"
+license: "BSD-3-Clause"
+tags:
+  - mbus
+  - meter
+  - smart-meter
+  - heat-meter
+  - uart
+targets:
+  - esp32
+  - esp32c3
+  - esp32c6
+  - esp32s3
+dependencies:
+  idf:
+    version: ">=5.5"
+files:
+  exclude:
+    - "test/**/*"
+    - "test_apps/**/*"
+    - ".github/**/*"
+    - "release_notes.txt"
