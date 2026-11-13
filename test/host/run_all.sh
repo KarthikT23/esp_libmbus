@@ -62,6 +62,11 @@ build meter_scan_test test/host/meter_scan_test.c $FAKE $METER $RECORD $FRAME $L
 build fake_slave_test test/host/fake_slave_test.c $FAKE $PROTO $AUX $LINK \
     && run fake_slave_test
 
+# docs: every snippet compiles, the offline example output is true
+if python3 test/host/check_docs.py; then :; else
+    fails=$((fails + 1))
+fi
+
 # upstream sources keep their warnings, ours must stay clean
 if grep -E '^(src/mbus-(meter|link)|include/mbus-(meter|link)|test/host/)[^:]*:[0-9]+:[0-9]+: warning' "$WARN_LOG"; then
     echo "FAIL: warnings in our own sources"

@@ -1,0 +1,60 @@
+name: Meter report
+description: Tell us how esp_libmbus worked (or did not) with your meter
+title: "[meter] <manufacturer> <model>"
+labels: ["meter-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Working and not working reports both help. Remove serial numbers and secondary addresses from logs if you do not want them public.
+  - type: input
+    id: meter
+    attributes:
+      label: Meter (manufacturer, model, firmware if known)
+    validations:
+      required: true
+  - type: dropdown
+    id: medium
+    attributes:
+      label: Medium
+      options: [heat, cooling, water, warm water, gas, electricity, heat cost allocator, other]
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options: [works, partial (some values or needed profile changes), fails]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: esp_libmbus version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: ESP chip, ESP-IDF version, level converter
+      placeholder: "ESP32-C3, IDF 5.5.5, <converter>"
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Settings used
+      description: Profile macro and any changed fields, baud rate, primary or secondary address, optical head or bus.
+      render: c
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Output of the read, ideally with the frame trace (mbus_dump_send_event / mbus_dump_recv_event registered).
+      render: text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Values that looked wrong, missing records, quirks.
