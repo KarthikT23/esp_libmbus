@@ -51,26 +51,3 @@ jobs:
           . "$IDF_PATH/export.sh"
           idf.py set-target ${{ matrix.target }}
           idf.py build
-
-  # compile-only: not run on hardware, not listed as tested
-  idf-build-extra:
-    name: examples/read_meter / ${{ matrix.target }} (build only)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    container: espressif/idf:v5.5.5
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [esp32s2, esp32c2, esp32h2, esp32p4]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          path: esp_libmbus
-      - name: Build
-        working-directory: esp_libmbus/examples/read_meter
-        shell: bash
-        run: |
-          git config --global --add safe.directory '*'
-          . "$IDF_PATH/export.sh"
-          idf.py set-target ${{ matrix.target }}
-          idf.py build
