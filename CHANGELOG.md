@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- serial: errors go through ESP_LOGE instead of stderr
+- tcp: packet buffer 512 bytes, same as serial
+- docs: meter report links in README and usage guide
+
 ## 0.1.0
 
 First release.

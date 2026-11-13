@@ -1,4 +1,4 @@
-version: "0.1.0"
+version: "0.1.1"
 description: "M-Bus (Meter-Bus) master for ESP-IDF: typed meter readout, secondary scan, read profiles. Based on rscada libmbus."
 url: "https://github.com/KarthikT23/esp_libmbus"
 repository: "https://github.com/KarthikT23/esp_libmbus.git"

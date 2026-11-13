@@ -30,7 +30,8 @@ What this means: the library speaks the same protocol as rscada libmbus, so
 meters that work with rscada libmbus should work here too, but that is **not
 verified on real hardware** (no meter, no optical head). Treat the profiles as a
 starting point. If it works for your meter, please say so, see
-[Meter reports](#meter-reports).
+[Meter reports](#meter-reports), or
+[open a report now](https://github.com/KarthikT23/esp_libmbus/issues/new?template=meter_report.yml).
 
 ## Quick start
 
@@ -106,9 +107,9 @@ the usage guide, section 8.
 
 ## Meter reports
 
-Tried it with a real meter? Open an issue with the *Meter report* form, also when
-it did **not** work, that is just as useful. Working reports are added to the
-tested-meters table.
+Tried it with a real meter? [Open a meter report](https://github.com/KarthikT23/esp_libmbus/issues/new?template=meter_report.yml),
+also when it did **not** work, that is just as useful. Working reports are added to
+the [tested-meters table](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/tested-meters.md).
 
 ## Differences from rscada libmbus
 

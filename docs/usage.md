@@ -474,6 +474,7 @@ Several frames of one readout can be decoded into the same `out`, call
 ## 12. Tell us it worked (or did not)
 
 No real meter was available while writing this component, so reports from real
-installations are the most useful thing you can give back. Open a *Meter
-report* issue on the repository (the form asks for meter model, profile used
-and the log), the result is added to [tested-meters.md](tested-meters.md).
+installations are the most useful thing you can give back.
+[Open a meter report](https://github.com/KarthikT23/esp_libmbus/issues/new?template=meter_report.yml)
+(the form asks for meter model, profile used and the log), the result is added
+to [tested-meters.md](tested-meters.md). Failures are as useful as successes.

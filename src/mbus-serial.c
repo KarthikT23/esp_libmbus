@@ -214,7 +214,7 @@ mbus_serial_send_frame(mbus_handle *handle, mbus_frame *frame)
 
     if ((len = mbus_frame_pack(frame, buff, sizeof(buff))) < 0)
     {
-        fprintf(stderr, "%s: mbus_frame_pack failed\n", __PRETTY_FUNCTION__);
+        ESP_LOGE(TAG, "mbus_frame_pack failed");
         return -1;
     }
 
@@ -240,7 +240,7 @@ mbus_serial_send_frame(mbus_handle *handle, mbus_frame *frame)
     }
     else
     {
-        fprintf(stderr, "%s: Failed to write frame to UART (ret = %d)\n", __PRETTY_FUNCTION__, ret);
+        ESP_LOGE(TAG, "uart write failed (ret = %d)", ret);
         return -1;
     }
 
@@ -277,14 +277,14 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
 
     if (handle == NULL || frame == NULL)
     {
-        fprintf(stderr, "%s: Invalid parameter.\n", __PRETTY_FUNCTION__);
+        ESP_LOGE(TAG, "invalid parameter");
         return MBUS_RECV_RESULT_ERROR;
     }
 
     mbus_serial_data *sd = (mbus_serial_data *)handle->auxdata;
     if (sd == NULL || !sd->installed)
     {
-        fprintf(stderr, "%s: Serial connection is not available.\n", __PRETTY_FUNCTION__);
+        ESP_LOGE(TAG, "serial connection not available");
         return MBUS_RECV_RESULT_ERROR;
     }
     const int rd_ms = sd->cfg.rx_timeout_ms > 0 ? sd->cfg.rx_timeout_ms
@@ -357,7 +357,7 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
 
     if (len == -1)
     {
-        fprintf(stderr, "%s: M-Bus layer failed to parse data.\n", __PRETTY_FUNCTION__);
+        ESP_LOGE(TAG, "frame parse failed");
         return MBUS_RECV_RESULT_ERROR;
     }
 

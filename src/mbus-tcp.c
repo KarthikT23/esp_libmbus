@@ -23,7 +23,7 @@
 
 #include "mbus-tcp.h"
 
-#define PACKET_BUFF_SIZE 2048
+#define PACKET_BUFF_SIZE 512   /* max telegram is 261 bytes */
 #define MAX_PORT_SIZE 6 // Size of port number + NULL char
 
 static int tcp_timeout_sec = 4;
