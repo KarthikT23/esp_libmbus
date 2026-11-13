@@ -39,6 +39,7 @@ idf.py add-dependency "karthikt23/esp_libmbus"
 ```
 
 ```c
+#include <stdio.h>
 #include "mbus.h"
 
 void read_meter(void)
@@ -85,7 +86,7 @@ menuconfig pins, scan and baud probe is in
 
 ## Documentation
 
-| | |
+| Doc | Contents |
 |---|---|
 | [Usage guide](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/usage.md) | wiring, addressing, scan, reading values, profiles, errors, offline decode |
 | [API reference](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/api.md) | every function, struct, flag and profile field |
