@@ -12,10 +12,10 @@ All snippets assume:
 
 ## 1. Add the component
 
-From the registry (replace the namespace once published):
+From the registry:
 
 ```bash
-idf.py add-dependency "NAMESPACE/esp_libmbus"
+idf.py add-dependency "karthikt23/esp_libmbus"
 ```
 
 Or as a local copy, in the project's top level `CMakeLists.txt` before

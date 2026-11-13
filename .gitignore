@@ -85,3 +85,4 @@ CMakeLists.txt.user*.exe
 *.patch
 build_host/
 build_san/
+dist/

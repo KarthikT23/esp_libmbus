@@ -35,7 +35,7 @@ starting point. If it works for your meter, please say so, see
 ## Quick start
 
 ```bash
-idf.py add-dependency "NAMESPACE/esp_libmbus"
+idf.py add-dependency "karthikt23/esp_libmbus"
 ```
 
 ```c
