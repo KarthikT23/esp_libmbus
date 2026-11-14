@@ -1,0 +1,99 @@
+menu "read_bus example"
+
+    config EXAMPLE_UART_PORT
+        int "UART port"
+        default 1
+        help
+            UART0 is normally the console. C3 has UART0 and UART1 only.
+
+    config EXAMPLE_UART_TX_PIN
+        int "UART TX GPIO"
+        default 6 if IDF_TARGET_ESP32C6
+        default 4 if IDF_TARGET_ESP32C3
+        default 17 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S3
+        default 4
+
+    config EXAMPLE_UART_RX_PIN
+        int "UART RX GPIO"
+        default 7 if IDF_TARGET_ESP32C6
+        default 5 if IDF_TARGET_ESP32C3
+        default 16 if IDF_TARGET_ESP32
+        default 18 if IDF_TARGET_ESP32S3
+        default 5
+
+    config EXAMPLE_BAUDRATE
+        int "Baud rate"
+        default 2400
+        help
+            Ignored for the read if baud probing is enabled and finds a rate.
+
+    choice EXAMPLE_PROFILE
+        prompt "Meter profile"
+        default EXAMPLE_PROFILE_GENERIC
+
+        config EXAMPLE_PROFILE_GENERIC
+            bool "Generic"
+        config EXAMPLE_PROFILE_STRICT_FCB
+            bool "Strict NKE + FCB"
+        config EXAMPLE_PROFILE_SLOW
+            bool "Slow answer window"
+        config EXAMPLE_PROFILE_OPTICAL
+            bool "Optical head (wake-up burst)"
+    endchoice
+
+    choice EXAMPLE_FIND_MODE
+        prompt "How to find the meters"
+        default EXAMPLE_FIND_PRIMARY
+
+        config EXAMPLE_FIND_PRIMARY
+            bool "Fixed list of primary addresses"
+        config EXAMPLE_FIND_SCAN
+            bool "Secondary address scan"
+    endchoice
+
+    config EXAMPLE_PRIMARY_LIST
+        string "Primary addresses, comma separated"
+        default "1,2,3"
+        depends on EXAMPLE_FIND_PRIMARY
+        help
+            Each address 0..250 must belong to one meter only.
+
+    config EXAMPLE_SCAN_FIRST_BYTE_MS
+        int "Scan: first-byte wait per probe (ms)"
+        range 20 2000
+        default 120
+        depends on EXAMPLE_FIND_SCAN
+        help
+            The scan needs about 100 probes per collision level, slow on a real bus.
+
+    config EXAMPLE_MAX_METERS
+        int "Maximum number of meters"
+        range 1 32
+        default 8
+
+    config EXAMPLE_MAX_FAILS
+        int "Failed reads in a row before a meter is parked"
+        range 1 20
+        default 3
+
+    config EXAMPLE_PARK_ROUNDS
+        int "Rounds a parked meter is skipped"
+        range 1 100
+        default 5
+
+    config EXAMPLE_RESCAN_ROUNDS
+        int "Find the meters again every N rounds (0 = never)"
+        range 0 10000
+        default 0
+
+    config EXAMPLE_INTERVAL_S
+        int "Pause between rounds (s)"
+        range 1 3600
+        default 30
+
+    config EXAMPLE_TASK_STACK
+        int "Reader task stack (bytes)"
+        range 3072 16384
+        default 4096
+
+endmenu

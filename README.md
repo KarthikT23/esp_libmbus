@@ -84,6 +84,8 @@ void read_meter(void)
 Run it from a task with at least 4096 bytes of stack. A complete project with
 menuconfig pins, scan and baud probe is in
 [examples/read_meter](https://github.com/KarthikT23/esp_libmbus/tree/main/examples/read_meter).
+Several meters on one bus (scan or primary list, one read after the other, a
+failing meter is parked): [examples/read_bus](https://github.com/KarthikT23/esp_libmbus/tree/main/examples/read_bus).
 To decode a captured telegram without any hardware, see
 [examples/decode_frame](https://github.com/KarthikT23/esp_libmbus/tree/main/examples/decode_frame).
 

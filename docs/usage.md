@@ -320,7 +320,9 @@ void start_meter_task(void)
 ```
 
 Several meters on one bus: create one `mbus_meter_t` per meter on the same
-handle and read them one after the other.
+handle and read them one after the other. A complete version with scan or primary
+list, a skip policy for failing meters and an optional re-scan is in
+`examples/read_bus` (the logic is in `main/bus_reader.c`).
 
 ## 8. Profiles: when the generic read does not work
 

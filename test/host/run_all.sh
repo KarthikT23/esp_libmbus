@@ -65,6 +65,9 @@ build fake_slave_test test/host/fake_slave_test.c $FAKE $PROTO $AUX $LINK \
 build decode_example_test test/host/decode_example_test.c $RECORD $FRAME $PROTO $AUX $METER $LINK $FAKE \
     && run decode_example_test
 
+build read_bus_test test/host/read_bus_test.c -Iexamples/read_bus/main $RECORD $FRAME $PROTO $AUX $METER $LINK $FAKE \
+    && run read_bus_test
+
 # randomised decode, fixed seeds. The sanitizer run does more work.
 CORPUS_DIRS="test/corpus test/test-frames test/error-frames test/unsupported-frames"
 build fuzz_decode test/host/fuzz_decode.c $FRAME $RECORD $PROTO
@@ -82,7 +85,7 @@ if python3 test/host/check_docs.py; then :; else
 fi
 
 # upstream sources keep their warnings, ours must stay clean
-if grep -E '^(src/mbus-(meter|link)|include/mbus-(meter|link)|test/host/)[^:]*:[0-9]+:[0-9]+: warning' "$WARN_LOG"; then
+if grep -E '^(src/mbus-(meter|link)|include/mbus-(meter|link)|test/host/|(\.\./)*examples/)[^:]*:[0-9]+:[0-9]+: warning' "$WARN_LOG"; then
     echo "FAIL: warnings in our own sources"
     fails=$((fails + 1))
 fi
