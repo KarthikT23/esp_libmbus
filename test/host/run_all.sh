@@ -62,6 +62,20 @@ build meter_scan_test test/host/meter_scan_test.c $FAKE $METER $RECORD $FRAME $L
 build fake_slave_test test/host/fake_slave_test.c $FAKE $PROTO $AUX $LINK \
     && run fake_slave_test
 
+build decode_example_test test/host/decode_example_test.c $RECORD $FRAME $PROTO $AUX $METER $LINK $FAKE \
+    && run decode_example_test
+
+# randomised decode, fixed seeds. The sanitizer run does more work.
+CORPUS_DIRS="test/corpus test/test-frames test/error-frames test/unsupported-frames"
+build fuzz_decode test/host/fuzz_decode.c $FRAME $RECORD $PROTO
+if [ "${SAN:-}" = "1" ]; then
+    for seed in 1 2 3; do
+        run fuzz_decode -l -n 1500 -s $seed $CORPUS_DIRS
+    done
+else
+    run fuzz_decode -l -n 300 $CORPUS_DIRS
+fi
+
 # docs: every snippet compiles, the offline example output is true
 if python3 test/host/check_docs.py; then :; else
     fails=$((fails + 1))

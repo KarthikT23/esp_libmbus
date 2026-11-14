@@ -1,0 +1,11 @@
+menu "decode_frame example"
+
+    config EXAMPLE_FRAME_HEX
+        string "Frame(s) as hex"
+        default "68 15 15 68 08 00 72 45 33 08 24 C5 14 00 04 01 00 00 00 04 13 78 56 34 12 27 16"
+        help
+            One or more complete M-Bus telegrams (68 .. 16) in hex, spaces
+            allowed. Separate several telegrams of one readout with ';'.
+            No meter or UART is needed, the frames are only decoded.
+
+endmenu

@@ -35,7 +35,8 @@ Optional: `idf.py menuconfig` -> `esp_libmbus` -> *M-Bus over TCP gateway*
 ## 2. Hardware
 
 The ESP UART is 3.3 V logic. The M-Bus is a 24-36 V current loop, so a level
-converter (master) is needed between them.
+converter (master) is needed between them. Wiring details, echo behaviour and a
+first-read checklist are in [wiring.md](wiring.md).
 
 | Signal | Wiring |
 |--------|--------|
@@ -457,6 +458,11 @@ volume = 305419.896 m^3
 
 Several frames of one readout can be decoded into the same `out`, call
 `mbus_meter_decode_frame()` for each.
+
+The same thing as a ready project: `examples/decode_frame`. Paste one or more
+captured telegrams (hex, `;` between telegrams) into menuconfig, build, flash and
+read the records on the console. Useful for sending in a frame from a meter you
+cannot test with.
 
 ## 11. Sizes and limits
 

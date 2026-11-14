@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [examples/read_meter, test_apps]
+        app: [examples/read_meter, examples/decode_frame, test_apps]
         target: [esp32, esp32c3, esp32c6, esp32s3]
     steps:
       - uses: actions/checkout@v4

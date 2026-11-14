@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Doc checks: every ```c block in README.md and docs/usage.md must compile,
+"""Doc checks: every ```c block in README.md, docs/usage.md and docs/wiring.md must compile,
 a block with /* docs:run */ is linked, run and its stdout compared with the
 following ```text block, and every mbus_/MBUS_ name used in docs/api.md must
 exist in include/."""
@@ -49,7 +49,7 @@ def blocks(path):
 os.makedirs(BUILD, exist_ok=True)
 n_blocks = n_run = 0
 
-for rel in ("README.md", "docs/usage.md"):
+for rel in ("README.md", "docs/usage.md", "docs/wiring.md"):
     path = os.path.join(ROOT, rel)
     if not os.path.exists(path):
         fail(rel + " missing")

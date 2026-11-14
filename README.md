@@ -84,12 +84,15 @@ void read_meter(void)
 Run it from a task with at least 4096 bytes of stack. A complete project with
 menuconfig pins, scan and baud probe is in
 [examples/read_meter](https://github.com/KarthikT23/esp_libmbus/tree/main/examples/read_meter).
+To decode a captured telegram without any hardware, see
+[examples/decode_frame](https://github.com/KarthikT23/esp_libmbus/tree/main/examples/decode_frame).
 
 ## Documentation
 
 | Doc | Contents |
 |---|---|
-| [Usage guide](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/usage.md) | wiring, addressing, scan, reading values, profiles, errors, offline decode |
+| [Usage guide](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/usage.md) | addressing, scan, reading values, profiles, errors, offline decode |
+| [Wiring and converters](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/wiring.md) | ESP to level converter, echo, first-read checklist |
 | [API reference](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/api.md) | every function, struct, flag and profile field |
 | [Tested meters](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/tested-meters.md) | what was reported to work, by whom, with which profile |
 
@@ -97,7 +100,8 @@ menuconfig pins, scan and baud probe is in
 
 ESP UART TX/RX go to an M-Bus master level converter (24-36 V bus), not to the
 bus directly. Common ground with the converter. Echo of the transmitted bytes on
-RX, which many converters produce, is removed by the library.
+RX, which many converters produce, is removed by the library. Details and a
+first-read checklist: [wiring guide](https://github.com/KarthikT23/esp_libmbus/blob/main/docs/wiring.md).
 
 ## Profiles in one line
 
